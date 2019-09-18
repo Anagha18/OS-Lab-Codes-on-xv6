@@ -28,13 +28,10 @@ struct sockaddr_in server, client;		// Address structure for Client and Server
 int produce()
 {
   // TODO:  Use open() system call to open the file and write it to a character buffer "buff"
-	int fd=open(sock,O_RDONLY);
-	if(fd<0)
-	{
-		printf("Error Reading\n");
-		exit(0);
-	}
-	//write(
+	int fd = open("temp.txt",O_RDONLY);
+	int rd = read(fd,buff,256);
+	close(fd);
+	return rd;
 }
 
 int consume()
@@ -43,40 +40,23 @@ int consume()
 
     int sock = *(int *)new_sock;
 
-    write(sock, buff, BUF_LEN);
-
-    printf("In consumer %s",buff);
-
+    
     // TODO:  Read from the buffer written in produce() function and send it to client using write() system call, using the "sock" file descriptor.
-	read(sock,buff,BUF_LEN);
+	write(sock, buff, BUF_LEN);
+	printf("In consumer %s",buff);
+
 }
 
 void* producer(void *args)
 {
 	// TODO:  Use the three mutex variables, use sem_wait() and sem_post()
-	sem_wait(&t_consumer);
+	int* val = (int*)args;
+	sem_wait(&buf_mutex);
+	while(strlen(buff) > 0)//produce only when empty CS
+		sem_wait(&empty_count);
 	produce();
-	sem_post(&t_producer);
-	//return NULL;
-	/*int i,sum=0;//on stack
-	for(i=0;i<10;i++)
-	{
-
-		while(stock_max_limit==stock_count)
-		{
-			printf("\n stock overflow, production on wait..");
-			sem_wait(&semC);//waiting for semophore of consumer
-			printf("\n production operation continues..");
-		}
-
-	sleep(1);
-	stock_count ++;
-	printf("P :: stock-count:%d\n", stock_count);
-	sem_post(&semP);
-	printf("P :: post signal\n");
-	
-	}
-*/
+	sem_post(&fill_count);
+	sem_post(&buf_mutex);
 	return NULL;
 }
 
@@ -84,30 +64,12 @@ void* producer(void *args)
 void* consumer(void *args)
 {
 	// TODO:  Use the three mutex variables, use sem_wait() and sem_post()
-  	sem_wait(&t_producer);
+	sem_wait(&buf_mutex);
+	while(strlen(buff) == 0)//consume only when full CS
+		sem_wait(&fill_count);
 	consume();
-	sem_post(&t_consumer);
-	//return NULL;
-	/*int i,sum=0;//on stack
-	for(i=0;i<10;i++)
-	{
-
-		while(0==stock_count)//loop to wait for producer to complete. 
-		{
-			printf("\n stock overflow, consumption on wait..");
-			sem_wait(&semP);//waiting for semophore of consumer
-			printf("\n consumption operation continues..");
-		}
-
-	sleep(2);
-	stock_count --;
-	printf("C :: stock-count:%d\n", stock_count);
-	sem_post(&semC);
-	if()
-	printf("C :: post signal\n");//signal: producer produced
-
-	}
-*/
+	sem_post(&empty_count);
+	sem_post(&buf_mutex);
 	return NULL;
 }
 
@@ -165,20 +127,14 @@ int main(void)
        sem_init(&empty_count, 0, BUF_LEN); 	// Intialize empty_count to BUF_LEN=4096 (EMPTY)
 
     // TODO: Create 2 threads t_producer and t_consumer, with producer() and consumer() as their callback functions.
+	pthread_create(&t_producer, NULL, producer, (void*)&t_producer);
+	pthread_create(&t_consumer, NULL, consumer, (void*)&t_consumer);
     // TODO: Join the 2 threads
-	sem_init(&t_producer,0,0);//binary semaphore
-	sem_init(&t_consumer,0,0);
-	pthread_create(&t_consumer,NULL,consumer,NULL);
-	pthread_create(&t_producer,NULL,producer,NULL);
-	pthread_join(t_consumer,NULL);
 	pthread_join(t_producer,NULL);
-	sem_destroy(&t_consumer);
-	sem_destroy(&t_producer);
-	
+	pthread_join(t_consumer,NULL);
 
 	close(server_socket); 		// Close Server Socket
         close(client_sock);		// Close Client Socket
 
 	return 0;
 }
-
