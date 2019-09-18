@@ -55,15 +55,15 @@ int main(int argc, char **argv)
         sleep(3);
         int val = write(sockfd, (const char*) argv[2], strlen(argv[2])+1);
 	    printf("val: %d\n", val);	
-        int newfd = open("temp.txt",O_WRONLY|O_CREAT,0777);		
+        int nfd = open("temp.txt",O_WRONLY|O_CREAT,0777);		
         int bytesWritten = 0;
         int bytesRead = 256;
         while(bytesRead >= 256){
             bytesRead = read(sockfd, recvBuff, sizeof(recvBuff));
             printf("bytesRead :%d\n", bytesRead);
-            bytesWritten += write(newfd, recvBuff, bytesRead);
+            bytesWritten += write(nfd, recvBuff, bytesRead);
         }
-        close(newfd);
+        close(nfd);
         printf("bytesWritten: %d\n", bytesWritten);
     
   
