@@ -50,7 +50,6 @@ int consume()
 void* producer(void *args)
 {
 	// TODO:  Use the three mutex variables, use sem_wait() and sem_post()
-	int* val = (int*)args;
 	sem_wait(&buf_mutex);
 	while(strlen(buff) > 0)//produce only when empty CS
 		sem_wait(&empty_count);
