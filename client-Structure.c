@@ -37,8 +37,9 @@ int main(int argc, char **argv)
 
 	  /* Initialize sockaddr_in data structure */
 
-	serv_addr.sin_family = AF_INET;				
-	serv_addr.sin_port = htons(5050);  			// port:5050
+	serv_addr.sin_family = AF_INET;				// A sockaddr_in is a structure containing an internet address. 
+								// This structure is defined in <netinet/in.h>.
+	serv_addr.sin_port = htons(5050);  			// port
 	serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");	// local host IP address: 127.0.0.1
 
 
@@ -48,38 +49,23 @@ int main(int argc, char **argv)
 	{
 		printf("\n Error : Connect Failed \n");
 		return 1;
-	}
-
-			 /*Create file where data will be stored */
-
-	if (strcmp(GET, argv[1]) == 0)		// Compares string GET received from argument given by client
-	{
-		// TODO:  Send GET to the server using the "sockfd" file descriptor
+	}	
 		
-		// TODO:  Send the filename to the server using the "sockfd" file descriptor
-		// TODO:  Create a file with the same name as sent by client with get argument using the open() system call using appropriate flags 
-                          // to save the file contents received from server from the recBuff
-
-		/*TODO:  Receive data in chunks of 256 bytes */
-    		// TODO:  Use the read() system call within a loop to fetch the contents of the file from the server using sockfd
-		// TODO:  Use the write() system call to write those contents in the file which was created above.
-		fr=write(sockfd,argv[1],256);
-		fr=write(sockfd,argv[2],256);
-		while(1)
-		{
-			fr=read(sockfd,recvBuff,256);
-			if(fr==0)
-			{
-				puts("done");
-				break;
-			}
-			printf("%s\n",recvBuff);
-		}
-		
-    	}
+	write(sockfd, argv[1], sizeof(argv[1]));
+        sleep(3);
+        int val = write(sockfd, (const char*) argv[2], strlen(argv[2])+1);
+	    printf("val: %d\n", val);	
+        int newfd = open("temp.txt",O_WRONLY|O_CREAT,0777);		
+        int bytesWritten = 0;
+        int bytesRead = 256;
+        while(bytesRead >= 256){
+            bytesRead = read(sockfd, recvBuff, sizeof(recvBuff));
+            printf("bytesRead :%d\n", bytesRead);
+            bytesWritten += write(newfd, recvBuff, bytesRead);
+        }
+        close(newfd);
+        printf("bytesWritten: %d\n", bytesWritten);
+    
   
-    	}
-  
-
 	return 0;
 }
