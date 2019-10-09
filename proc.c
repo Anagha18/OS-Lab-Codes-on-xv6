@@ -88,7 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-
+  p->priority=10;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -211,7 +211,7 @@ fork(void)
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
   pid = np->pid;
-
+  //int prior=np->priority;
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
@@ -292,6 +292,7 @@ wait(void)
         freevm(p->pgdir);
         p->pid = 0;
         p->parent = 0;
+ 	//p->priority=10;
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
@@ -523,7 +524,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+    cprintf("%d %d %s %s",p->priority, p->pid, state, p->name);
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
@@ -554,8 +555,9 @@ cps(void)
       state = states[p->state];
     else
       state = "???";
-  cprintf("(%d ,%s ,%s)", p->pid,p->name,state);
-     
+  cprintf("(%d, %s, %s, %d)\n", p->pid,p->name,state,p->priority);
+
+     //jjgn show ps, change priority, ps again.
 } 
 return 0;
 }
